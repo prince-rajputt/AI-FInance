@@ -123,8 +123,19 @@ export async function scanReceipt(file) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+    // Handle both File object and FormData
+    let fileToProcess = file;
+    if (file instanceof FormData) {
+      fileToProcess = file.get("file");
+    }
+    
+    if (!fileToProcess) {
+       console.error("ScanReceipt: No file provided");
+       throw new Error("No file provided");
+    }
+
     // Convert File to ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = await fileToProcess.arrayBuffer();
     // Convert ArrayBuffer to Base64
     const base64String = Buffer.from(arrayBuffer).toString("base64");
 
@@ -152,7 +163,7 @@ export async function scanReceipt(file) {
       {
         inlineData: {
           data: base64String,
-          mimeType: file.type,
+          mimeType: fileToProcess.type,
         },
       },
       prompt,
@@ -173,10 +184,11 @@ export async function scanReceipt(file) {
       };
     } catch (parseError) {
       console.error("Error parsing JSON response:", parseError);
+      console.error("Raw text:", text);
       throw new Error("Invalid response format from Gemini");
     }
   } catch (error) {
-    console.error("Error scanning receipt:", error.message);
+    console.error("Error scanning receipt:", error.message, error.stack);
     throw new Error("Failed to scan receipt");
   }
 }
