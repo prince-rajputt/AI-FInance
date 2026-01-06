@@ -3,8 +3,10 @@ import { getAccountWithTransactions } from "@/actions/accounts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import TransactionTable from "../_components/transaction-table";
-import { BarLoader } from "react-spinners";
 import AccountChart from "../_components/account-chart";
+import AccountQRCode from "../_components/account-qr";
+import AccountDetailsButton from "../_components/account-details-button";
+import { BarLoader } from "react-spinners";
 
 export default async function AccountPage({ params }) {
   const accountData = await getAccountWithTransactions(params.id);
@@ -37,6 +39,19 @@ export default async function AccountPage({ params }) {
           </p>
         </div>
       </div>
+
+      {/* QR Code Section */}
+      <AccountQRCode 
+        accountId={account.id} 
+        accountName={account.name}
+        qrCode={account.qrCode}
+      />
+
+      {/* Account Details Button */}
+      <AccountDetailsButton
+        account={account}
+        qrCode={account.qrCode}
+      />
 
       {/* Chart Section */}
       <Suspense

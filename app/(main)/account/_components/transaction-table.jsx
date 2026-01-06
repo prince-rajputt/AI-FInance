@@ -122,7 +122,7 @@ const TransactionTable = ({ transactions}) => {
     setSelectedIds((current) =>
     current.includes(id)
     ? current.filter((item) => item != id)
-    : [...current.id]
+    : [...current, id]
     );
   };
 
@@ -155,7 +155,7 @@ const TransactionTable = ({ transactions}) => {
       setSearchTerm("");
       setTypeFilter("");
       setRecurringFilter("");
-      setSelectedIds("[]");
+      setSelectedIds([]);
     };
 
     const handlePageChange = (newPage) => {
@@ -308,7 +308,7 @@ const TransactionTable = ({ transactions}) => {
                     </TableCell>
                 </TableRow>
             ):(
-              filteredAndSortedTransactions.map((transaction)=>(
+              paginatedTransactions.map((transaction)=>(
                 <TableRow key={transaction.id}>
              <TableCell>
               <Checkbox onCheckedChange={()=> handleSelect(transaction.id)} 
@@ -366,7 +366,6 @@ const TransactionTable = ({ transactions}) => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -393,7 +392,6 @@ const TransactionTable = ({ transactions}) => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
-                  </TableCell>
            </TableRow>
               ))
             )}
@@ -403,26 +401,41 @@ const TransactionTable = ({ transactions}) => {
 
         {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center justify-between gap-4 mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-gray-700">
+              Page <span className="font-bold text-blue-600">{currentPage}</span> of <span className="font-bold text-blue-600">{totalPages}</span>
+            </span>
+            <span className="text-xs text-gray-600">
+              Showing {paginatedTransactions.length} of {filteredAndSortedTransactions.length} transactions
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="gap-1"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>

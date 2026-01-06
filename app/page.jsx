@@ -11,7 +11,7 @@ export default function Home() {
     <div className="mt-40">
       <HeroSection />
 
-      <section className="py-20 bg-gradient-to-b from-white via-indigo-50/30 to-blue-50 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-b from-teal-50 via-teal-100/30 to-green-50 relative overflow-hidden">
          {/* Decorative Background */}
          <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 opacity-30 pointer-events-none">
             <div className="absolute top-[20%] left-[10%] w-72 h-72 bg-amber-300/30 rounded-full blur-[100px] animate-pulse" />

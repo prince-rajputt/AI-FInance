@@ -10,19 +10,86 @@ const HeroSection = () => {
 
   const imageRef = useRef();
   const iframeRef = useRef(null);
+  const playerRef = useRef(null);
+  const [iframeReady, setIframeReady] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
   const toggleMute = () => {
-    if (iframeRef.current) {
+    // Use YouTube Player API if available; fall back to postMessage guarded access
+    try {
+      if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
+        if (isMuted) playerRef.current.unMute();
+        else playerRef.current.mute();
+        setIsMuted(!isMuted);
+        return;
+      }
+
+      const win = iframeRef.current?.contentWindow;
+      if (!win || !iframeReady) {
+        console.warn('iframe not ready yet — cannot send postMessage');
+        return;
+      }
+
       const action = isMuted ? 'unMute' : 'mute';
-      iframeRef.current.contentWindow.postMessage(JSON.stringify({
-        event: 'command',
-        func: action,
-        args: []
-      }), '*');
+      win.postMessage(JSON.stringify({ event: 'command', func: action, args: [] }), '*');
       setIsMuted(!isMuted);
+    } catch (e) {
+      console.warn('Failed to control iframe audio', e);
     }
   };
+
+  // Initialize YouTube Iframe API and player
+  useEffect(() => {
+    let cancelled = false;
+
+    function initPlayer() {
+      try {
+        if (cancelled) return;
+        if (!window.YT || !iframeRef.current) return;
+        // If player already exists, skip
+        if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') return;
+
+        // Create player using the existing iframe element
+        playerRef.current = new window.YT.Player(iframeRef.current, {
+          events: {
+            onReady: (e) => {
+              setIframeReady(true);
+              // Ensure initial mute state
+              if (isMuted && typeof e.target.mute === 'function') e.target.mute();
+            }
+          },
+          playerVars: {
+            autoplay: 1,
+            mute: 1,
+            loop: 1,
+            playlist: '1uIUUVBrj0g',
+            controls: 0,
+            enablejsapi: 1,
+          }
+        });
+      } catch (err) {
+        // ignore - we'll fallback to postMessage approach
+        console.warn('YT player init failed', err);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      if (window.YT && window.YT.Player) {
+        initPlayer();
+      } else {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        tag.async = true;
+        window.onYouTubeIframeAPIReady = () => initPlayer();
+        document.body.appendChild(tag);
+      }
+    }
+
+    return () => {
+      cancelled = true;
+      // Do not destroy player here to avoid race conditions with nav transitions
+    };
+  }, [isMuted]);
 
   useEffect(()=>{
     const imageElement = imageRef.current;
@@ -117,13 +184,14 @@ const HeroSection = () => {
             <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-purple-500 to-blue-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
             <div className="relative rounded-lg shadow-2xl border mx-auto bg-black overflow-hidden aspect-video">
                 <iframe 
-                    ref={iframeRef}
-                    className="w-full h-full"
-                    src="https://www.youtube.com/embed/1uIUUVBrj0g?autoplay=1&mute=1&loop=1&playlist=1uIUUVBrj0g&controls=0&showinfo=0&rel=0&enablejsapi=1" 
-                    title="AI in Finance" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
+                  ref={iframeRef}
+                  className="w-full h-full"
+                  src="https://www.youtube.com/embed/1uIUUVBrj0g?autoplay=1&mute=1&loop=1&playlist=1uIUUVBrj0g&controls=0&showinfo=0&rel=0&enablejsapi=1" 
+                  title="AI in Finance" 
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  onLoad={() => setIframeReady(true)}
+                  allowFullScreen
                 ></iframe>
                 
                 <div className="absolute bottom-6 right-6 z-20">

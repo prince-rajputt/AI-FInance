@@ -148,6 +148,10 @@ function CalendarDayButton({
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  // Filter out any non-boolean `disabled` prop that may have been passed through
+  // (react-day-picker allows `disabled` as a function). We rely on `modifiers.disabled`.
+  const { disabled, ...buttonProps } = props;
+
   return (
     <Button
       ref={ref}
@@ -168,7 +172,7 @@ function CalendarDayButton({
         defaultClassNames.day,
         className
       )}
-      {...props} />
+      {...buttonProps} />
   );
 }
 

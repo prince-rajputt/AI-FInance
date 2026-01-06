@@ -3,6 +3,7 @@
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { generateAccountQRCode } from "@/lib/qrcode";
 
 const serializeTransaction = (obj) => {
     const serialized = { ...obj };
@@ -62,10 +63,18 @@ export async function createAccount(data){
             },
         });
 
+        // Generate QR code for the newly created account
+        const qrCodeDataUrl = await generateAccountQRCode(account.id, account.name);
+        
+        // Update account with QR code
+        const updatedAccount = await db.account.update({
+            where: { id: account.id },
+            data: { qrCode: qrCodeDataUrl },
+        });
 
-    const serializedAccount = serializeTransaction(account);
-    revalidatePath("/dashboard")
-    return{ success: true, data: serializedAccount };
+        const serializedAccount = serializeTransaction(updatedAccount);
+        revalidatePath("/dashboard")
+        return{ success: true, data: serializedAccount };
     } catch (error) {
         throw new Error(error.message);
     }

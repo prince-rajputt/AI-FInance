@@ -36,6 +36,7 @@ model Account {
   type         AccountType
   balance      Decimal       @default(0) // will ask inital balance while creating an account
   isDefault    Boolean       @default(false)
+  qrCode       String?       // QR code data URL for this account
   userId       String
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
@@ -59,6 +60,7 @@ model Transaction {
   nextRecurringDate DateTime?         // Next date for recurring transaction
   lastProcessed    DateTime?         // Last time this recurring transaction was processed
   status           TransactionStatus  @default(COMPLETED)
+  transactionId    String?            @unique // Unique transaction ID for transfers
   userId           String
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId        String

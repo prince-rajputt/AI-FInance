@@ -10,8 +10,7 @@ import BudgetProgress from './_components/budget-progress'
 import DashboardOverview from './_components/transaction-overview'
 
 async function DashboardPage () {
-const accounts = await getUserAccounts();
-
+  const accounts = await getUserAccounts();
   const defaultAccount = accounts?.find((account) => account.isDefault);
 
   // Get budget for default account
@@ -29,6 +28,7 @@ const accounts = await getUserAccounts();
         <BudgetProgress
         initialBudget={budgetData?.budget}
         currentExpenses={budgetData?.currentExpenses || 0}
+        accountId={defaultAccount.id}
       />
       )}
 

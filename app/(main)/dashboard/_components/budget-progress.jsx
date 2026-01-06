@@ -1,20 +1,26 @@
 "use client";
 
-import { updateBudget } from '@/actions/budget';
+import { updateBudget, getCurrentBudget } from '@/actions/budget';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import useFetch from '@/hooks/usefetch';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, Pencil, X, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 
-export function BudgetProgress({ initialBudget, currentExpenses }) {
+export function BudgetProgress({ initialBudget, currentExpenses, accountId }) {
   const [isEditing, setIsEditing] = useState(false);
   const [newBudget, setNewBudget] = useState(
     initialBudget?.amount?.toString() || ""
   );
+  const [displayExpenses, setDisplayExpenses] = useState(currentExpenses);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    setNewBudget(initialBudget?.amount?.toString() || "");
+  }, [initialBudget]);
 
   const {
     loading: isLoading,
@@ -23,8 +29,25 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
     error,
   } = useFetch(updateBudget);
 
-  const percentUsed = initialBudget
-    ? (currentExpenses / initialBudget.amount) * 100
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const budgetData = await getCurrentBudget(accountId);
+      setDisplayExpenses(budgetData.currentExpenses || 0);
+      toast.success("Budget refreshed");
+    } catch (e) {
+      toast.error("Failed to refresh budget");
+      console.error(e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const percentUsed = initialBudget && initialBudget.amount
+    ? Math.min(
+        100,
+        Math.max(0, (Number(displayExpenses || 0) / Number(initialBudget.amount)) * 100)
+      )
     : 0;
 
   const handleUpdateBudget = async () => {
@@ -73,13 +96,13 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
                   className="w-32"
                   placeholder="Enter amount"
                   autoFocus
-                  disabled={isLoading}
+                  disabled={!!isLoading}
                 />
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleUpdateBudget}
-                  disabled={isLoading}
+                  disabled={!!isLoading}
                 >
                   <Check className="h-4 w-4 text-green-500" />
                 </Button>
@@ -87,7 +110,7 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
                   variant="ghost"
                   size="icon"
                   onClick={handleCancel}
-                  disabled={isLoading}
+                  disabled={!!isLoading}
                 >
                   <X className="h-4 w-4 text-red-500" />
                 </Button>
@@ -96,7 +119,7 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
               <>
                 <CardDescription>
                   {initialBudget
-                    ? `$${currentExpenses.toFixed(
+                    ? `$${displayExpenses.toFixed(
                         2
                       )} of $${initialBudget.amount.toFixed(2)} spent`
                     : "No budget set"}
@@ -109,6 +132,16 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRefresh}
+                  disabled={!!isRefreshing}
+                  className="h-6 w-6"
+                  title="Refresh budget data"
+                >
+                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
               </>
             )}
           </div>
@@ -117,16 +150,16 @@ export function BudgetProgress({ initialBudget, currentExpenses }) {
 
   <CardContent>
         {initialBudget && <div className='space-y-2'>
-            <Progress  
-            value={percentUsed}
-            extraStyles={`${
-              percentUsed >= 90
-              ? "bg-red-500"
-              : percentUsed >= 75
-              ? "bg-yello-500"
-              : "bg-green-500"
-            }`}
-              />
+            <Progress
+              value={percentUsed}
+              extraStyles={`$${
+                percentUsed >= 90
+                ? "bg-red-500"
+                : percentUsed >= 75
+                ? "bg-yellow-500"
+                : "bg-green-500"
+              }`}
+            />
               <p className='text-xs text-muted-foreground text-right'>
                 {percentUsed.toFixed(1)}% used
               </p>

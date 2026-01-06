@@ -2,6 +2,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/header";
+import Background from "@/components/background";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subset: ["latin"]});
@@ -16,13 +17,15 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
     <html lang="en">
       <body
-        className={`${inter.className}`}
+        className={`${inter.className} transition-colors duration-300`}
       >
         {/* header */}
         <Header />
-        <main className="min-h-screen">
-        {children}
-        </main>
+        <Background>
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </Background>
         <Toaster richColors />
         {/* footer */}
         <footer className="bg-blue-50 py-12">

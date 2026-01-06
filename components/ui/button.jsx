@@ -44,11 +44,16 @@ function Button({
 }) {
   const Comp = asChild ? Slot : "button"
 
+  const safeProps = {
+    ...props,
+    disabled: props.disabled === undefined ? undefined : !!props.disabled,
+  };
+
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props} />
+      {...safeProps} />
   );
 }
 
